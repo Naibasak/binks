@@ -47,8 +47,8 @@ class Client(object):
         except socket.error as e:
             logger.info('read error %r', e)
 
-        print("buf ==", cache)
-        print("len ==", len(cache))
+        # print("buf ==", cache)
+        # print("len ==", len(cache))
 
         self.handle_request(cache)
         self.loop.remove_callback(self.fd, MODE_IN, self.read_callback)

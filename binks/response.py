@@ -96,5 +96,5 @@ class Response(object):
 
         for body in self.response_list:
             resp_list.append(body)
-        logger.debug('resp:==>\n' + ''.join(resp_list))
+        # logger.debug('resp:==>\n' + ''.join(resp_list))
         return ''.join(resp_list)

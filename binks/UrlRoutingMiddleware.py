@@ -1,5 +1,7 @@
 # coding=utf-8
 
+from binks.FileRoutingMiddleware import frmw
+
 class UrlRoutingMiddleware:
     apis = dict()
 
@@ -16,7 +18,7 @@ class UrlRoutingMiddleware:
     @staticmethod
     def _execute_exc(environ):
         uri_path = environ['PATH_INFO']
-        return 404,('%s not found' % uri_path).encode('utf-8')
+        return 404,('%s not found' % uri_path).encode('utf-8'),[]
 
     # def __call__(self, environ, start_response):
     #     path = environ['PATH_INFO']
@@ -30,7 +32,11 @@ class UrlRoutingMiddleware:
         if self.apis.has_key(uri_path):
             api = self.apis.get(uri_path)
         else:
-            api = self._execute_exc
+            buf,headers = frmw.readfile(uri_path)
+            if headers is None:
+                api = self._execute_exc
+            else:
+                return 200, buf, headers
         return api(environ)
 
 mw = UrlRoutingMiddleware()

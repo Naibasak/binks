@@ -36,19 +36,16 @@ class Client(object):
         self.request = None
         self.response = None
         self._socket.setblocking(False)
+        self.plat = platform.system()
 
     def read_callback(self):
         cache = b''
         try:
             while True:
                 cache += self._socket.recv(BUF_SIZE)
-        except socket.timeout as et:
-            logger.info('read error %r', et)
-        except socket.error as e:
-            logger.info('read error %r', e)
-
-        # print("buf ==", cache)
-        # print("len ==", len(cache))
+        except (socket.timeout, socket.error) as e:
+            # logger.info('read error %r', e)
+            pass
 
         self.handle_request(cache)
         self.loop.remove_callback(self.fd, MODE_IN, self.read_callback)
@@ -72,16 +69,19 @@ class Client(object):
             except socket.error as e:
                 logger.info('write error %r', e)
 
-        self.loop.remove_callback(self.fd, MODE_OUT, self.write_callback)
+        if self.plat != "Windows":
+            self.loop.remove_callback(self.fd, MODE_OUT, self.write_callback)
         self._socket.close()
 
     def process_request_thread(self, data):
         self.request = Request(data)
         response_list = self.app(self.request.environs, self.request.start_response)
-
         self.response = Response(response_list, request=self.request)
-        self.write()
 
+        if self.plat != "Windows":
+            self.write()
+        else:
+            self.write_callback()
 
     def handle_request(self, data):
         """Start a new thread to process the request."""

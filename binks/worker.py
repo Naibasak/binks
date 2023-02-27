@@ -36,6 +36,7 @@ class Client(object):
         self.request = None
         self.response = None
         self._socket.setblocking(False)
+        self.isBreak = False
         self.plat = platform.system()
 
     def read_callback(self):
@@ -43,8 +44,11 @@ class Client(object):
         try:
             while True:
                 cache += self._socket.recv(BUF_SIZE)
+                if self.isBreak:
+                    break
         except (socket.timeout, socket.error) as e:
             # logger.info('read error %r', e)
+            self.isBreak = True
             pass
 
         self.handle_request(cache)

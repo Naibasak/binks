@@ -8,11 +8,12 @@ import signal
 import socket
 
 from binks.worker import Worker
-from binks.utils import logger, SIGNALS
+from binks.utils import logger,SIGNALS
 
+import platform
 
 class Server(object):
-    def __init__(self, address: tuple, app=None, worker_num: int = 5):
+    def __init__(self, address, app=None, worker_num=5):
         self.workers_pid = []
         self._address = address
         self.app = app
@@ -21,27 +22,37 @@ class Server(object):
         self.set_sockopts()
         self._socket.bind(address)
 
-    def listen(self, backlog: int = 128):
+    def listen(self, backlog = 128):
         self._socket.listen(backlog)
-        logger.info(f'Listening {self._address}...')
+        logger.info('Listening %s ...', str(self._address))
 
     def set_sockopts(self):
         self._socket.setblocking(False)
         self._socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self._socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+        if platform.system() != "Windows":
+            self._socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
 
     def register_signals(self):
-        signal.signal(signal.SIGTERM, self.handle_exit)
         signal.signal(signal.SIGQUIT, self.handle_exit)
-        signal.signal(signal.SIGUSR1, self.handle_exit)
+        signal.signal(signal.SIGTERM, self.handle_exit)
+        signal.signal(signal.SIGINT, self.handle_exit)
 
     def handle_exit(self, signum, frame):
-        logger.info(f'Server receive {SIGNALS[signum]}')
+        logger.info('Server receive %s', SIGNALS[signum])
         self.stop()
 
     def run(self):
+        if platform.system() == "Windows":
+            self.run_windows()
+        else:
+            self.listen()
+            self.spawn_workers()
+
+    def run_windows(self):
         self.listen()
-        self.spawn_workers()
+        worker = Worker(self._socket, app=self.app)
+        worker.run()
+
 
     def stop(self):
         signum = signal.SIGTERM
@@ -56,7 +67,7 @@ class Server(object):
                 os.kill(pid, signum)
                 pid, stat = os.waitpid(pid, 0)
                 if pid:
-                    logger.info(f'Worker {pid} has been killed')
+                    logger.info('Worker %s has been killed', pid)
                     break
             except OSError as e:
                 if e.errno == errno.ECHILD:
@@ -102,7 +113,6 @@ class Server(object):
                 while True:
                     self.reap_workers()
                     time.sleep(4)
-                    logger.debug('hello world')
             except KeyboardInterrupt:
                 logger.info('Receive SIGINT...')
                 self.stop()

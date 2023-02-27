@@ -12,7 +12,8 @@ with open('README.md') as readme_file:
 
 requirements = ['werkzeug_raw', ]
 
-setup_requirements = ['pytest-runner', ]
+#setup_requirements = ['pytest-runner', ]
+setup_requirements = []
 
 test_requirements = ['pytest', ]
 
@@ -24,8 +25,8 @@ setup(
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
         'Natural Language :: English',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 2.6',
+        'Programming Language :: Python :: 2.7',
     ],
     description="A simple WSGI web server.",
     install_requires=requirements,

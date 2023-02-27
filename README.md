@@ -6,11 +6,11 @@
 
 
 
-> A simple WSGI web server.
+> A simple WSGI web server. Add support for windows and lower python versions(python 2.7).
 
 ## Prerequisites
 
-* Python >= 3.6
+* Python >= 2.7
 * werkzeug_raw
 
 ## Install
